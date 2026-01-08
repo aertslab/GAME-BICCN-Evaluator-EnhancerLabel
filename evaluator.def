@@ -1,0 +1,56 @@
+Bootstrap: docker
+From: python:3.13-slim
+Stage: build
+
+%files
+    evaluator_RestAPI.py /DeepBICCN2_EnhancerLabel_Evaluator/evaluator_RestAPI.py
+    config.py /DeepBICCN2_EnhancerLabel_Evaluator/config.py
+    data_loader.py /DeepBICCN2_EnhancerLabel_Evaluator/data_loader.py
+    evaluator_content_handler.py /DeepBICCN2_EnhancerLabel_Evaluator/evaluator_content_handler.py
+    evaluator_metrics_calculator.py /DeepBICCN2_EnhancerLabel_Evaluator/evaluator_metrics_calculator.py
+    evaluator_data /evaluator_data
+
+%environment
+    export APPTAINER_NO_MOUNT="home,tmp,proc,sys,dev"
+    export LC_ALL=C
+    export PATH="/opt/conda/bin:$PATH"
+    export LD_LIBRARY_PATH="/opt/conda/lib:$LD_LIBRARY_PATH"
+    
+%post
+    # Install system packages and dependencies
+    echo "Installing system dependencies..."
+    apt-get update && \
+    apt-get install -y --no-install-recommends python3-pip bzip2 ca-certificates && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+    echo "Installing Python dependencies..."
+    python -m pip install --upgrade pip
+    python -m pip install --no-cache-dir numpy tqdm pandas msgpack scipy scikit-learn requests
+
+    # Set permissions to access all directories
+    echo "Setting permissions for directories and script..."
+    chmod -R 755 /DeepBICCN2_EnhancerLabel_Evaluator/
+    chmod -R 755 /evaluator_data/
+
+%runscript
+    exec python3 /DeepBICCN2_EnhancerLabel_Evaluator/evaluator_RestAPI.py "$@"
+
+%startscript
+    exec python3 /DeepBICCN2_EnhancerLabel_Evaluator/evaluator_RestAPI.py "$@"
+
+%labels
+    DeepBICCN2 Enhancer Label Evaluator
+    Date 2025-11-25
+
+%help
+    This is a container for the DeepBICCN2 Enhancer Label Evaluator.
+    It includes:
+    - RESTful evaluator API script (evaluator_RestAPI.py)
+    - Configuration module (config.py)
+    - Data loader module (data_loader.py)
+    - Content handler for HTTP communication (evaluator_content_handler.py)
+    - Metrics calculator module (evaluator_metrics_calculator.py)
+    - Evaluator data directory with benchmark sequences
+
+    Usage:
+        apptainer run evaluator.sif <predictor_ip> <predictor_port> <output_directory>
