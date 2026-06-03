@@ -139,7 +139,10 @@ def check_duplicates_from_json(json_file_path):
 
 
 def create_json_request():
-    cell_types = ["Astro", "Endo", "L2_3IT","L5ET","L5IT","L5_6NP","L6CT", "L6IT","L6b","Lamp5","Micro_PVM","OPC","Oligo","Pvalb","Sncg", "Sst","SstChodl", "VLMC","Vip"]
+    # Canonical (full) cell-type names, matching what the DeepBICCN2 Predictor
+    # advertises in /help. Using canonical names improves exact-match
+    # compatibility with other GAME Predictors without relying on the Matcher.
+    cell_types = ["Astrocyte", "Endothelial", "L2/3 IT", "L5 ET", "L5 IT", "L5/6 NP", "L6 CT", "L6 IT", "L6b", "Lamp5", "Micro-PVM", "OPC", "Oligodendrocyte", "Pvalb", "Sncg", "Sst", "Sst Chodl", "VLMC", "Vip"]
 
     try:
         sequence_dataFrame = pd.read_csv(EVALUATOR_INPUT_PATH, sep='\t')
@@ -161,11 +164,11 @@ def create_json_request():
         sequence_dict = dict(zip(sequence_dataFrame.enhancerID, sequence_dataFrame.enhancer_sequence))
 
         # Build the JSON evaluator object
+        # NOTE: the top-level "request" key was removed in the updated GAME API.
         evaluator_dict = {
-            "request": "predict",
             "readout": "point",
             "prediction_tasks": prediction_tasks,
-            "sequences": sequence_dict 
+            "sequences": sequence_dict
         }
         
         # Convert the dictionary to a JSON string

@@ -15,30 +15,32 @@ from sklearn.metrics import accuracy_score, classification_report
 
 from config import EVALUATOR_NAME, EVALUATOR_INPUT_PATH
 
-# Mapping from ground truth labels to DeepBICCN2 predictor output classes
+# Mapping from ground truth labels to DeepBICCN2 predictor output classes.
 # Based on: https://github.com/aertslab/CREsted-paper/blob/main/Figure_5/validated_enhancers_scoring.ipynb
+# NOTE: values are the canonical (full) cell-type names the Predictor now returns
+# in cell_type_requested/actual, so the argmax comparison stays aligned.
 DF_TO_CLASS_MAPPING = {
-    'Astro': 'Astro',
-    'Endo': 'Endo',
-    'L2_3IT': 'L2_3IT',
-    'L5IT': 'L5IT',
-    'L5ET': 'L5ET',
-    'L5_6NP': 'L5_6NP',
-    'L6CT': 'L6CT',
-    'L6IT': 'L6IT',
+    'Astro': 'Astrocyte',
+    'Endo': 'Endothelial',
+    'L2_3IT': 'L2/3 IT',
+    'L5IT': 'L5 IT',
+    'L5ET': 'L5 ET',
+    'L5_6NP': 'L5/6 NP',
+    'L6CT': 'L6 CT',
+    'L6IT': 'L6 IT',
     'L6b': 'L6b',
     'Lamp5': 'Lamp5',
-    'Micro_PVM': 'Micro_PVM',
+    'Micro_PVM': 'Micro-PVM',
     'OPC': 'OPC',
-    'Oligo': 'Oligo',
+    'Oligo': 'Oligodendrocyte',
     'Pvalb': 'Pvalb',
     'Sncg': 'Sncg',
     'Sst': 'Sst',
-    'SstChodl': 'SstChodl',
+    'SstChodl': 'Sst Chodl',
     'VLMC': 'VLMC',
     'Vip': 'Vip',
-    'L4IT': 'L5IT',
-    'L6_IT_Car3': 'L6IT',
+    'L4IT': 'L5 IT',
+    'L6_IT_Car3': 'L6 IT',
     'Lamp5_Lhx6': 'Lamp5',
     'Pvalb_Chc': 'Pvalb',
 }
@@ -119,34 +121,40 @@ def calculate_and_save_metrics(saved_predictions_path, output_dir):
                         timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S.%f")
                         description = "Enhancer Classification"
 
-                        # Create base metric dict
+                        # Create base metric dict.
+                        # NOTE: column names are lowercase and a 'prediction_task(s)_data'
+                        # column is included, per the updated GAME evaluator output schema.
                         base_dict = {
-                            "Evaluator": EVALUATOR_NAME,
-                            "Description": description,
-                            "Predictor_name": predictor_name,
-                            "Time_stamp": timestamp,
+                            "evaluator_name": EVALUATOR_NAME,
+                            "description": description,
+                            "predictor_name": predictor_name,
+                            "time_stamp": timestamp,
                         }
 
                         # Add all metrics to results (matches notebook output)
                         all_task_evaluation_results.append({
                             **base_dict,
-                            'Metric': 'accuracy',
-                            'Value': str(accuracy_value),
+                            'metric': 'accuracy',
+                            'value': str(accuracy_value),
+                            'prediction_task(s)_data': prediction_task_data_nopredictions,
                         })
                         all_task_evaluation_results.append({
                             **base_dict,
-                            'Metric': 'precision',
-                            'Value': str(precision_value),
+                            'metric': 'precision',
+                            'value': str(precision_value),
+                            'prediction_task(s)_data': prediction_task_data_nopredictions,
                         })
                         all_task_evaluation_results.append({
                             **base_dict,
-                            'Metric': 'recall',
-                            'Value': str(recall_value),
+                            'metric': 'recall',
+                            'value': str(recall_value),
+                            'prediction_task(s)_data': prediction_task_data_nopredictions,
                         })
                         all_task_evaluation_results.append({
                             **base_dict,
-                            'Metric': 'f1_score',
-                            'Value': str(f1_value),
+                            'metric': 'f1_score',
+                            'value': str(f1_value),
+                            'prediction_task(s)_data': prediction_task_data_nopredictions,
                         })
 
             except Exception as e:

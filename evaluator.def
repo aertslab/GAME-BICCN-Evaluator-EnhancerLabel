@@ -12,6 +12,9 @@ Stage: build
 
 %environment
     export APPTAINER_NO_MOUNT="home,tmp,proc,sys,dev"
+    # Ignore the host user's ~/.local site-packages so the bundled deps are used
+    # regardless of the launching host (keeps the container portable).
+    export PYTHONNOUSERSITE=1
     export LC_ALL=C
     export PATH="/opt/conda/bin:$PATH"
     export LD_LIBRARY_PATH="/opt/conda/lib:$LD_LIBRARY_PATH"
@@ -39,8 +42,11 @@ Stage: build
     exec python3 /DeepBICCN2_EnhancerLabel_Evaluator/evaluator_RestAPI.py "$@"
 
 %labels
-    DeepBICCN2 Enhancer Label Evaluator
-    Date 2025-11-25
+    Author "Lukas Mahieu"
+    game_schema_version "1.0"
+    Description "DeepBICCN2 Enhancer Label Evaluator for the GAME framework. Classifies validated enhancers by their predicted on-target cell type using the DeepBICCN2 accessibility model."
+    # NOTE: the build date is appended to the evaluator name automatically at run time
+    # via Apptainer's org.label-schema.build-date label (see config.py).
 
 %help
     This is a container for the DeepBICCN2 Enhancer Label Evaluator.
