@@ -10,6 +10,13 @@ evaluator_base = "DeepBICCN2_EnhancerLabel_Evaluator"
 # Name of the file being used for predictions
 input_file = 'biccn_enhancers_withSequence.csv'
 
+# --- Prediction tasks ---
+# Canonical (full) cell-type names, matching what the DeepBICCN2 Predictor advertises in /help.
+# One prediction task is sent per cell type, named f"{TASK_NAME_PREFIX}{cell_type}"; the metrics
+# step uses that name to know which cell type each returned task belongs to.
+CELL_TYPES = ["Astrocyte", "Endothelial", "L2/3 IT", "L5 ET", "L5 IT", "L5/6 NP", "L6 CT", "L6 IT", "L6b", "Lamp5", "Micro-PVM", "OPC", "Oligodendrocyte", "Pvalb", "Sncg", "Sst", "Sst Chodl", "VLMC", "Vip"]
+TASK_NAME_PREFIX = "accessibility_"
+
 # --- Directory Settings ---
 # Get the absolute path of the script's directory
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
