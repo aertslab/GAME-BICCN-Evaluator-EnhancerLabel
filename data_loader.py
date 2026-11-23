@@ -7,7 +7,7 @@ from collections import Counter
 import functools
 import pandas as pd
 
-from config import EVALUATOR_INPUT_PATH, input_file
+from config import EVALUATOR_INPUT_PATH, input_file, CELL_TYPES, TASK_NAME_PREFIX
 
 class DuplicateKeysError(ValueError):
     """Raised when duplicate keys are found in a JSON object."""
@@ -139,10 +139,10 @@ def check_duplicates_from_json(json_file_path):
 
 
 def create_json_request():
-    # Canonical (full) cell-type names, matching what the DeepBICCN2 Predictor
-    # advertises in /help. Using canonical names improves exact-match
+    # Canonical (full) cell-type names (config.CELL_TYPES), matching what the DeepBICCN2
+    # Predictor advertises in /help. Using canonical names improves exact-match
     # compatibility with other GAME Predictors without relying on the Matcher.
-    cell_types = ["Astrocyte", "Endothelial", "L2/3 IT", "L5 ET", "L5 IT", "L5/6 NP", "L6 CT", "L6 IT", "L6b", "Lamp5", "Micro-PVM", "OPC", "Oligodendrocyte", "Pvalb", "Sncg", "Sst", "Sst Chodl", "VLMC", "Vip"]
+    cell_types = CELL_TYPES
 
     try:
         sequence_dataFrame = pd.read_csv(EVALUATOR_INPUT_PATH, sep='\t')
@@ -152,7 +152,7 @@ def create_json_request():
 
         prediction_tasks = [
         {
-            "name": f"accessibility_{cell_type}",
+            "name": f"{TASK_NAME_PREFIX}{cell_type}",
             "type": "accessibility",
             "cell_type": cell_type,
             "scale": "linear",

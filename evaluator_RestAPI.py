@@ -74,11 +74,19 @@ def run_evaluator(predictor_ip, predictor_port, output_dir):
     output_filename = f"{config.output_filename_base}_from_{predictor_name}.json"
     saved_predictions_path = os.path.join(output_dir, output_filename)
         
-    # Check sequence counts before saving
+    # Check that each task returned exactly the sequence IDs that were sent. The metrics
+    # step enforces this; here it is only reported early in the log.
+    sent_ids = set(data_dict["sequences"].keys())
     for i, task in enumerate(response_payload.get("prediction_tasks", []), start=1):
-        preds = task.get("predictions", [])
-        if len(preds) != total_sequences:
-            print(f"Warning: Task {i} ('{task.get('name')}') has {len(preds)} predictions, but {total_sequences} sequences were sent to the Predictor.")
+        preds = task.get("predictions", {})
+        if "error" in preds:
+            print(f"Task {i} ('{task.get('name')}') returned an error -- skipping ID check.")
+            continue
+        returned_ids = set(preds.keys())
+        if returned_ids != sent_ids:
+            print(f"Warning: Task {i} ('{task.get('name')}') returned {len(returned_ids)} predictions for "
+                  f"{total_sequences} sequences sent: {len(sent_ids - returned_ids)} missing, "
+                  f"{len(returned_ids - sent_ids)} extra.")
     
     try:
         with open(saved_predictions_path, 'w', encoding='utf-8') as f:
@@ -88,11 +96,10 @@ def run_evaluator(predictor_ip, predictor_port, output_dir):
         print(f"FATAL: Could not save predictions to {saved_predictions_path}. {e}", file=sys.stderr)
         return
 
-    # Calculate and save final metrics
-    if is_success_response:
-        evaluator_metrics_calculator.calculate_and_save_metrics(saved_predictions_path, output_dir)
-    else:
-        print("Skipping metrics calculation because the Predictor did not return a 200 OK status.")
+    # Calculate and save final metrics. This always writes the metric rows: on a non-200
+    # response they are recorded as "NaN" (GAME spec) instead of the run leaving no trace.
+    evaluator_metrics_calculator.calculate_and_save_metrics(saved_predictions_path, output_dir,
+                                                            is_success_response=is_success_response)
 
 if __name__ == '__main__':
     # Check that mandatory arguments are passed to the script

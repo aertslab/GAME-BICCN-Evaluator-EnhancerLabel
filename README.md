@@ -7,8 +7,8 @@ https://zenodo.org/records/17802620
 
 ## Dataset Composition
 
-The evaluation dataset comprises 171 experimentally validated cis-regulatory elements from the BRAIN Initiative Cell Census Network
-(BICCN) across 19 mouse motor cortex cell types:
+The evaluation dataset (`evaluator_data/biccn_enhancers_withSequence.csv`) comprises 171 experimentally validated enhancers from the
+BRAIN Initiative Cell Census Network (BICCN). Enhancers are classified across 19 mouse motor cortex cell types:
 
 - Astrocytes (Astro)
 - Endothelial cells (Endo)
@@ -30,6 +30,43 @@ which cell type each enhancer regulates:
 - Precision (weighted): Weighted average precision across cell types, accounting for class imbalance
 - Recall (weighted): Weighted average recall across cell types
 - F1-score (weighted): Weighted harmonic mean of precision and recall
+
+## Prediction Request
+
+The Evaluator sends one request with `"readout": "point"` and the 171 sequences keyed by `enhancerID`, with no flanks or
+`prediction_ranges`. It asks for one task per cell type (the 19 names in `CELL_TYPES` in `config.py`), each with
+`type: "accessibility"`, `species: "mus_musculus"`, `scale: "linear"` and the name `accessibility_<cell type>`.
+An enhancer's predicted cell type is the task with the highest prediction for it, which is compared with its `target_ct`.
+
+Because every cell type is needed for that comparison, the run is not scored (all metrics are `NaN`) if the Predictor does not
+return HTTP 200, if any task is missing, duplicated or failed, if a task's enhancer IDs differ from those sent, or if any
+prediction is not a finite number.
+
+## Build and run
+
+Building is optional: you only need to build the container if you don't already have `biccn_evaluator.sif`, or if you have
+changed the code or `evaluator_data/`. Build from the repository root (the build pulls `python:3.13-slim` and pip packages,
+so it needs internet access):
+
+```bash
+apptainer build biccn_evaluator.sif evaluator.def
+```
+
+Run the Evaluator against a running Predictor:
+
+```bash
+apptainer run biccn_evaluator.sif <PREDICTOR_IP> <PREDICTOR_PORT> <OUTPUT_DIR>
+```
+
+The Evaluator calls the Predictor's `/formats` and then `/predict`, and writes to `<OUTPUT_DIR>` (created if missing):
+
+- `<EVALUATOR_NAME>_predictions_from_<predictor_name>.json`: the Predictor's response
+- `evaluation_summary_<EVALUATOR_NAME>.csv`: tab-separated, one row per metric, appended on each run (values are `NaN`
+  if the run is not scored)
+
+The Evaluator names itself `DeepBICCN2_EnhancerLabel_Evaluator_<build timestamp>` inside the container (from the Apptainer
+build date) and `DeepBICCN2_EnhancerLabel_Evaluator_dev` outside it. If the Predictor cannot be reached, the run exits with an
+error and writes nothing.
 
 # Citations
 
